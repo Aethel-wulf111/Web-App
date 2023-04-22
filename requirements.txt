@@ -1,0 +1,7 @@
+flask,
+pefile,
+pandas,
+scikit-learn,
+matplotlib,
+mlxtend,
+magic
