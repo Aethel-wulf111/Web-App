@@ -29,11 +29,11 @@ def load_and_read_json2():
             return i
     print("ERROR !!!")
 
-def load_and_read_pdf():
+def load_and_read_pdf(filename):
     get_files = get_all_files()
     # get the exe file
     for i in get_files :
-        if ".pdf" in i:
+        if filename in i:
             return i
     print("ERROR !!!")
 
@@ -67,54 +67,58 @@ def draw_score_rate(data):
     plt.savefig('malware_scores.png')
 
 def draw_graph(hash_file):
-    API_KEY = "f18862dd85b0ec074530c0931faab8b9471df84513c521c282b1b3004ba0095d"  # Insert your VT API here.
-    # Creates the graph.
-    graph = VTGraph(API_KEY, private=False, name="")
-    # Adds the node.
-    graph.add_node(
-        hash_file,
-        "file", label="")
-    # Expands the graph 1 level.
-    graph.expand_n_level(level=1, max_nodes_per_relationship=5, max_nodes=100)
-    # Saves the graph.
-    graph.save_graph()
-    # URL of graph
+    try :
+        API_KEY = "f18862dd85b0ec074530c0931faab8b9471df84513c521c282b1b3004ba0095d"  # Insert your VT API here.
+        # Creates the graph.
+        graph = VTGraph(API_KEY, private=False, name="")
+        # Adds the node.
+        graph.add_node(
+            hash_file,
+            "file", label="")
+        # Expands the graph 1 level.
+        graph.expand_n_level(level=1, max_nodes_per_relationship=5, max_nodes=100)
+        # Saves the graph.
+        graph.save_graph()
+        # URL of graph
 
-    url = f"https://www.virustotal.com/graph/embed/{str(graph.graph_id)}?theme=light"
+        url = f"https://www.virustotal.com/graph/embed/{str(graph.graph_id)}?theme=light"
 
-    # Set the URL you want to screenshot
-    _start = time.time()
+        # Set the URL you want to screenshot
+        _start = time.time()
 
-    # Set up the Chrome webdriver
-    options = webdriver.ChromeOptions()
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--disable-gpu')
-    options.add_argument('--disable-extensions')
-    options.add_argument('--headless')
-    options.add_argument('--window-size=1200,800')
+        # Set up the Chrome webdriver
+        options = webdriver.ChromeOptions()
+        options.add_argument('--no-sandbox')
+        options.add_argument('--disable-dev-shm-usage')
+        options.add_argument('--disable-gpu')
+        options.add_argument('--disable-extensions')
+        options.add_argument('--headless')
+        options.add_argument('--window-size=1200,800')
 
-    # Navigate to the URL and take a screenshot
-    driver = webdriver.Chrome(options=options)
-    driver.get(url)
-    driver.execute_script("document.body.style.zoom='121%'")
-    time.sleep(20)
-    driver.save_screenshot('screenshot.png')
-    driver.quit()
+        # Navigate to the URL and take a screenshot
+        driver = webdriver.Chrome(options=options)
+        driver.get(url)
+        driver.execute_script("document.body.style.zoom='121%'")
+        time.sleep(20)
+        driver.save_screenshot('screenshot.png')
+        driver.quit()
 
-    _end = time.time()
+        _end = time.time()
 
-    # Open the image file
-    image = Image.open('screenshot.png')
+        # Open the image file
+        image = Image.open('screenshot.png')
 
-    # Define the cropping coordinates (left, upper, right, lower)
-    box = (100, 100, 1200, 800)
+        # Define the cropping coordinates (left, upper, right, lower)
+        box = (100, 100, 1200, 800)
 
-    # Crop the image
-    cropped_image = image.crop(box)
+        # Crop the image
+        cropped_image = image.crop(box)
 
-    # Save the cropped image
-    cropped_image.save('example_cropped.png')
+        # Save the cropped image
+        cropped_image.save('example_cropped.png')
+        return True
+    except Exception:
+        return False
 
 def score_rate(data):
     # 80 + x : 5 *5 + 10:ML + 25:behav + 10*foreach api
@@ -151,7 +155,7 @@ def get_png_of_graph():
     get_files = get_all_files()
     # get the exe file
     for i in get_files :
-        if "example_cropped.png":
+        if "example_cropped.png" in i:
             return i
     print("error")
 
@@ -163,7 +167,8 @@ def generate_report(data,s,familly,filename):
     dictionary = json.loads(report_data)
 
     # Create a new PDF file
-    file_pdf = datetime.datetime.now().strftime("malware_analysis_report_"+get_name_of_file(filename)+"_%Y-%m-%d_%H-%M-%S"+".pdf")
+    filename = "malware_analysis_report_"+get_name_of_file(filename)+"_%Y-%m-%d_%H-%M-%S"+".pdf"
+    file_pdf = datetime.datetime.now().strftime(filename)
     pdf_file = canvas.Canvas(file_pdf, pagesize=letter)
 
     # Set the font and font size for the report
@@ -295,37 +300,60 @@ def generate_report(data,s,familly,filename):
     # Graph of all data
     pdf_file.setFont("Helvetica-Bold", 14)
     pdf_file.drawString(50, 700, "Graph:")
-    draw_graph(s[1])
-    img_reader = ImageReader(get_png_of_graph())
-    width, height = letter
-    # Rotate the canvas and draw the image horizontally
-    pdf_file.saveState()
-    pdf_file.rotate(90)
-    pdf_file.drawImage(img_reader, -100, -width, width=height, height=width)
-    pdf_file.showPage()
-    pdf_file.setFont("Helvetica-Bold", 14)
-    pdf_file.drawString(50, 700, "Recommendations:")
-    pdf_file.setFont("Helvetica", 13)
-    pdf_file.drawString(50, 675, f"To prevent future {familly} infections, we recommend implementing security best")
-    pdf_file.drawString(50, 650, "practices such as : ")
-    pdf_file.drawString(50, 625, "1. Isolate the infected system")
-    pdf_file.drawString(50, 600, "2. Assess the scope of the attack")
-    pdf_file.drawString(50, 575, "3. Determine the type of ransomware")
-    pdf_file.drawString(50, 550, "4. Backup and restore")
-    pdf_file.drawString(50, 525, "5. Consult with security experts")
-    pdf_file.drawString(50, 500, "6. Do not pay the ransom beceause it does not guarantee that the data will be restored ")
-    pdf_file.drawString(50, 475, "and may encourage further attacks.")
-    pdf_file.drawString(50, 450, "7. Strengthen cybersecurity measures: ")
-    pdf_file.drawString(100, 425, "- Updating software and systems.")
-    pdf_file.drawString(100, 400, "- Implementing multi-factor authentication.")
-    pdf_file.drawString(100, 375, "- Enforcing strong password policies.")
-    pdf_file.drawString(100, 350, "- Educating employees on how to detect and report suspicious activity.")
+    if draw_graph(s[1]):
+        img_reader = ImageReader(get_png_of_graph())
+        width, height = letter
+        # Rotate the canvas and draw the image horizontally
+        pdf_file.saveState()
+        pdf_file.rotate(90)
+        pdf_file.drawImage(img_reader, -100, -width, width=height, height=width)
+        pdf_file.showPage()
+        pdf_file.setFont("Helvetica-Bold", 14)
+        pdf_file.drawString(50, 700, "Recommendations:")
+        pdf_file.setFont("Helvetica", 13)
+        pdf_file.drawString(50, 675, f"To prevent future {familly} infections, we recommend implementing security best")
+        pdf_file.drawString(50, 650, "practices such as : ")
+        pdf_file.drawString(50, 625, "1. Isolate the infected system")
+        pdf_file.drawString(50, 600, "2. Assess the scope of the attack")
+        pdf_file.drawString(50, 575, "3. Determine the type of ransomware")
+        pdf_file.drawString(50, 550, "4. Backup and restore")
+        pdf_file.drawString(50, 525, "5. Consult with security experts")
+        pdf_file.drawString(50, 500, "6. Do not pay the ransom beceause it does not guarantee that the data will be restored ")
+        pdf_file.drawString(50, 475, "and may encourage further attacks.")
+        pdf_file.drawString(50, 450, "7. Strengthen cybersecurity measures: ")
+        pdf_file.drawString(100, 425, "- Updating software and systems.")
+        pdf_file.drawString(100, 400, "- Implementing multi-factor authentication.")
+        pdf_file.drawString(100, 375, "- Enforcing strong password policies.")
+        pdf_file.drawString(100, 350, "- Educating employees on how to detect and report suspicious activity.")
+    else:
+        pass
     
     # Save the PDF file and close it
     os.chdir("../archive")
     pdf_file.save()
     print("["+str(now)+"]~ Done!!! - THE PDF HAS BEEN GENERATED")
-    return load_and_read_pdf()
+    return load_and_read_pdf(filename)
+#################
+# get exec file 
+# get name
+# serach in all of the list
 
 def get_pdf():
-    return load_and_read_pdf()
+    get_files = get_all_files()
+    # get the exe file
+    for i in get_files :
+        if ".exe" in i or ".dll" in i or "sys" in i:
+            file_exe = i
+            break
+        if not ".txt" in i:
+            if not ".json" in i :
+                file_exe = i
+                break
+    string_file = file_exe.split("/")
+    string_file =  string_file[-1].split(".")[0]
+    # get the exe file
+    for i in get_files :
+        file_pdf = datetime.datetime.now().strftime(string_file+"_%Y-%m-%d_%H-" )
+        if file_pdf in i:
+            return i
+    print("error")

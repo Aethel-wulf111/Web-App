@@ -36,83 +36,45 @@ def load_and_read_exe_strings(filename):
 
 # Get some strings to analyisi by strings
 #~ Encryption algorithmes ~ Narimene maybe can be changed
+def algo_crypt(STRING_FILE,file_path_exe):
+    #print("Strings Analysis ~ ")
+    with open(STRING_FILE, "r") as f:
+        strings = f.read().lower()
+    total_chars = len(strings)
+    #print(total_chars)
+    
+    libs_keywords = ["PyCrypto","cryptography","M2Crypto","PyNaCl","PyOpenSSL","Fernet","Simple\-crypt","PyCryptodome","Charm\-crypto","Keyczar","Pycrypto Plus","Bcrypt","SecureString","Cryptacular","Pyca","SecretStorage","Vault","OpenSSL","Libgcrypt","GnuTLS","Crypto\+\+","Botan","Libsodium","BouncyCastle","\.NETCryptography","CngKey"]
+    encryption_keywords = ["encrypt", "key", "AES", "RSA", "blowfish","asymmetric","symmetric","ciphers","hashes","hash","key","public\-key","private\-key"]
+    rate = 0
 
-def algo_crypt(file_path_str,file_path_exe):
-    var1 = 0 #variable de keyword
-    var2 = 0 #variable de librairies
-    var3 = 0 #variable de cryptage
-    x    = 0
-    temp = []
+    # coefficient : 1 ~ encryptions
+    encryption_regex = "(" + "|".join(encryption_keywords) + ")"
+    encryption_matches = re.findall(encryption_regex, strings, re.IGNORECASE)
+    if len(encryption_matches) > 0:
+        rate += 1 * len(encryption_matches)
 
-    # Liste 1
-
-    keywords = ["encrypt", "key","AES","RSA","blowfish", "asymmetric","symmetric","ciphers","hashes", "hash", "key", "public", "private"]
-
-    with open(file_path_str, 'r') as file:
-        text = file.read()
-
-    for k in keywords:
-        if k.lower() in text:
-            if k.lower() in temp :
-                pass
-            else :
-                temp.append(k.lower())
-                x= x+1
-                var1 = var1 +1
-
-    # Liste 2
-
-    lib1 = ["cryptography", "PyCrypto", "M2Crypto", "bcrypt", "passlib", "keyczar", "PyOpenSSL", "paramiko", "simple-crypt", 
-            "PyNaCl", "Java Cryptography Extension","Apache Commons Crypto", "OpenSSL","Cryptacular","libsodium","GnuPG",
-            "Libgcrypt","mbed TLS","Crypto++","Botan","Libgcrypt","Bouncy Castle","CryptSharp","System.Security.Cryptography",
-            "OpenSSL.NET","Security.Cryptography","Fernet"]
-    for l in lib1:
-        pattern = r"import\s+{}\s|from\s+{}\s".format(re.escape(l), re.escape(l))
-        match = re.search(pattern, text,re.IGNORECASE)
-        if match:
-            var2= var2 + 1
-
-    # Liste 3
-    file.close()
-
-    obj = magic.Magic()
-
-    # Obtenir le type de fichier
-    file_type = obj.from_file(file_path_exe)
-
-    # Vérifier si c'est un fichier binaire
-    if "executable" in file_type or "shared object" in file_type:
-        # Lire les premiers octets du fichier pour détecter les chaînes de caractères
-        with open(file_path_str, "rb") as file:
-            data = file.read(1024) # lire les 1024 premiers octets
-            if b"RSA-2048" in data:
-                var3 = var3+1
-            elif b"AES-256" in data:
-                var3 = var3+1
-            elif b"Blowfish" in data:
-                var3 = var3+1
-            elif b"RC4" in data:
-                var3 = var3+1
-            elif b"ChaCha20" in data:
-                var3 = var3+1
-            elif b"Twofish" in data:
-                var3 = var3+1
-            elif b"Triple DES" in data:
-                var3 = var3+1
-            elif b"Serpent" in data:
-                var3 = var3+1
-            elif b"Camellia" in data:
-                var3 = var3+1
-
-    # Evaluation du fichier
-
-    s = var1+var2+var3*2
-    if s <10 :
+    # coefficient : 1 ~ libs
+    encryption_ = "(" + "|".join(libs_keywords) + ")"
+    encryption_m = re.findall(encryption_, strings, re.IGNORECASE)
+    if len(encryption_m) > 0:
+        rate += 1 * len(encryption_m)
+    
+    # coefficient : 2 ~ algorithms
+    encryption_algorithms = ["AES-256", "RSA-2048", "blowfish","RC4","ChaCha20","Twofish","Triple DES","Serpent","Camellia"]
+    for match in encryption_matches:
+        for algorithm in encryption_algorithms:
+            if algorithm.lower() in match.lower():
+                rate += 2 * len(algorithm)
+    
+    # Calculate the probs "~" : sum of rates / (div) total of strings
+    #print("rate : "+ str(rate))
+    #print("probs : "+ str((rate / total_chars)*100))
+    if rate < 10 : 
         return True
-    if s <60 and s > 10 :
+    elif rate < 60:
         return False
-    if s >= 60 :
-        return False
+    else:
+        return False        
 
 # L'entropie
 
